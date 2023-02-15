@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+.App {
+  text-align: center;
+  max-width: 955px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 48px;
+}
+html{
+  height: 100%;
+  background-image: url("../public/back.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+body{
+  /* background-color: #050819; */
+  font-family: 'DM Sans';
+}
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #2F4465; 
+  border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #213350; 
+}
