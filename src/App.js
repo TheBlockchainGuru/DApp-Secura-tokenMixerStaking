@@ -76,7 +76,9 @@ class App extends React.Component {
       currentID : '',
       lastDepositArray : [],
       arrayLength : 0,
-      displayArray : []
+      displayArray : [],
+      withdrawAllLoading : false,
+      contractETHBalance : "___"
     };
     this.handleTab = this.handleTab.bind(this);
     this.handleAmount = this.handleAmount.bind(this);
@@ -86,6 +88,7 @@ class App extends React.Component {
     this.walletConnect = this.walletConnect.bind(this);
     this.walletDisconnect = this.walletDisconnect.bind(this);
     this.handleTooltip = this.handleTooltip.bind(this);
+    this.withdrawAll = this.withdrawAll.bind(this);
   }
 
   async componentWillMount(){
@@ -225,7 +228,7 @@ class App extends React.Component {
     this.setState({
       depositLoading : true
     })
-    await this.state.stakingContract.methods.Deposit()
+    await this.state.stakingContract.methods.deposit()
     .send({
       from:address, 
       value:ethers.BigNumber.from(amount * Math.pow(10,18) + '')
@@ -263,7 +266,7 @@ class App extends React.Component {
     }
 
     console.log(address, key)
-    await this.state.stakingContract.methods.Claim(address, web3.utils.BN(key +"") )
+    await this.state.stakingContract.methods.claim(address, web3.utils.BN(key +"") )
     .send({
       from:this.state.linkedAccount
     })
@@ -281,16 +284,46 @@ class App extends React.Component {
     NotificationManager.success("successfully withdrawd", "Withdraw", 5000); 
  })
   }
+
+  async withdrawAll (){
+      console.log(this.state.linkedAccount, "11111111")
+      this.setState({
+        withdrawAllLoading : true
+      })
+      await this.state.stakingContract.methods.claimAll(this.state.linkedAccount)
+      .send({
+        from:this.state.linkedAccount
+      })
+      .once("error", (err) => {
+        this.setState({
+          withdrawAllLoading : false
+        })
+    })
+    .once("confirmation", async () => {
+      this.setState({
+        withdrawAllLoading : false
+      })
+      NotificationManager.success("successfully withdrawed all", "Withdraw All", 5000); 
+  })
+  }
+
   async copyKey(){
     navigator.clipboard.writeText(this.state.key)
     NotificationManager.success("successfully copied, please store it immediately", "Copied", 5000); 
   }
+
   async donateSet(){
     this.setState({
       withdrawAddress : ownerAddress
     })
   }
+
   async CheckStatus (){
+
+    let balance = await web3.eth.getBalance(stakingAddress)
+    this.setState({
+      contractETHBalance : (balance/  Math.pow(10, 18)).toFixed(4) * 1
+    })
     let currentID = await stakingContract.methods.depositNo().call()
     this.setState({currentId : currentID / 1})
     let data = await   stakingContract.getPastEvents("_Deposit", {
@@ -414,32 +447,38 @@ class App extends React.Component {
       displayArray : temp
     })
   }
+
   handleTab = (event, newValue) => {
     this.setState({
       tab: newValue,
     });
   };
+
   handleAmount = (event) => {
     this.setState({
       amount: event.target.value,
     });
   };
+
   handleRadioAmount = (event) => {
     this.setState({
       amount: event.target.value,
       radioAmount: event.target.value,
     });
   };
+
   handleNote = (event) => {
     this.setState({
       note: event.target.value,
     });
   };
+
   handleAddress = (event) => {
     this.setState({
       withdrawAddress: event.target.value,
     });
   };
+
   handleTooltip = (value) =>{
     this.setState({
       copied: value,
@@ -449,7 +488,7 @@ class App extends React.Component {
   render() {
     return (
       <div className="App">
-        <Header walletConnect={this.walletConnect} walletDisconnect={this.walletDisconnect} linkedAccount = {this.state.linkedAccount}/>
+        <Header walletConnect={this.walletConnect} walletDisconnect={this.walletDisconnect} linkedAccount = {this.state.linkedAccount} withdrawAllLoading ={this.state.withdrawAllLoading} withdrawAll = {this.withdrawAll}/>
            {/* notification */}
         <Collapse in={this.state.openModal}>
         <Stack sx={{ width: "100%", mb: 5, fontFamily: "DM Sans" }} spacing={2}>
@@ -483,7 +522,7 @@ class App extends React.Component {
             }}
           >     
           <Typography>{this.state.key}</Typography>
-          <Typography>click this to copy!</Typography>
+          <Typography sx = {{textTransform: 'initial'}} > Click here to copy your note!</Typography>
           </Alert>
           </Button>
         </Stack>
@@ -670,7 +709,7 @@ class App extends React.Component {
                 py: 2,
                 textTransform: "none",
               }}
-              disabled={this.state.depositLoading || isNaN(this.state.amount) || this.state.linkedAccount == ""}
+              disabled={this.state.depositLoading || isNaN(this.state.amount) || this.state.linkedAccount === ""}
               onClick={()=>this.Deposit(this.state.linkedAccount, this.state.amount * 1)}
             >
               {" "}
@@ -852,9 +891,40 @@ class App extends React.Component {
             </Box>
             </Grid>
           </Grid>
+
+        <Box     py={4}>
+          <Box
+              sx={{
+                width: "100%",
+                backgroundColor: "#1B2A41",
+                borderRadius: "15px",
+                border: "solid 2px #3E4269",
+                textAlign: "left",
+              }}
+            >
+              <Box
+                sx={{
+                  borderBottom: 2,
+                  borderColor: "#26a1f91a",
+                  height: "48px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent:"center"
+                }}
+              >
+                <Typography
+                  sx={{ color: "white", my: "auto", ml: 3, fontWeight: 700,
+                 }}
+                >
+                  Pooled ETH : {this.state.contractETHBalance} &nbsp; ETH
+                </Typography>
+              </Box>
+            </Box>
+
+
         </Box>
         
-      </div>
+     </Box> </div>
     );
   }
 }

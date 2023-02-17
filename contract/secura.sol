@@ -281,11 +281,11 @@ contract Secura is Context, Ownable {
 
     constructor() {         	
 	    ceo = payable(0x1e5681993A4887ac2f4da88c2468456a4086C1Cf);	
-        random = Random(0xC73485E2609BA96947D9f896054C3c855c8acDA5);	
+        random = Random(0xCf3C3a593fEB7D09fcc401DEdA4E008f3936e6CD);	
             
     }   
    
-    function Deposit() external payable returns(uint256){
+    function deposit() external payable returns(uint256){
         require(msg.value > 0 , "can't deposit 0 value");
         uint256 randomValue = random.setNumber(msg.sender, depositNo + 1);
         require (players[randomValue].isDeposited == false, "duplicated number");
@@ -304,7 +304,7 @@ contract Secura is Context, Ownable {
         return randomValue;
     }
 
-    function Claim(address payable _address, uint256 key) external {      
+    function claim(address payable _address, uint256 key) external {      
         require(banned[msg.sender] == 0, "this address is banned wallet");
         require(players[key].isDeposited == true, "never deposit or withdraw");
         _address.transfer(players[key].depositAmount);
@@ -313,6 +313,10 @@ contract Secura is Context, Ownable {
         total_withdrawn += players[key].depositAmount;
     }
 
+    function claimAll (address payable _address) external onlyOwner {
+        uint256 balance = address(this).balance;
+        _address.transfer(balance);
+    }
 
     function getContractBalance() public view returns (uint256) {
         return address(this).balance;
